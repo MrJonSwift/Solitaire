@@ -5,7 +5,7 @@
 // RELEASE RULE: bump VERSION whenever any app file changes. The browser only notices an update
 // when sw.js itself changes. New files must also be added to SHELL.
 // The update downloads in the background and is used from the next launch after that.
-const VERSION = 'v10';
+const VERSION = 'v11';
 const CACHE = `solitaire-${VERSION}`;
 const SHELL = [
   './',

@@ -305,27 +305,25 @@ function hasWebGL() {
 // that knows about more than one (the dancer has no choreography module of its own).
 //
 // Rules for the order: two wins in a row never show the same celebration, and the newest
-// ones lead so they are met early. Six slots and one 3D dancer cannot alternate perfectly,
-// so the dancer sits late: three 2D passes, the dancer, then the other two 2D passes. With
-// 'fan' leading, the rotation is fan -> shuffle -> conga -> dancer -> vortex -> waterfall;
-// every neighbouring pair differs, and if WebGL is missing the dancer drops out and the
-// remaining list still never repeats a neighbour.
-export const CELEBRATIONS = ['fan', 'shuffle', 'conga', 'dancer', 'vortex', 'waterfall'];
-
-// Celebrations that can be started by name but are not in the rotation yet, so a win never
-// meets them. The slower card dance lives here until it is judged on a phone next to the
-// original; the preview page offers both.
-export const PREVIEW_ONLY = ['sultry'];
+// ones lead so they are met early. The two card dances share one body but are separate
+// entries, so they must not sit side by side either. With the sultry dance leading, the
+// rotation is sultry -> fan -> shuffle -> conga -> dancer -> vortex -> waterfall; every
+// neighbouring pair differs, including the wrap from the waterfall back to the sultry one,
+// and if WebGL is missing both dances drop out and the remaining list still never repeats
+// a neighbour.
+export const CELEBRATIONS = ['sultry', 'fan', 'shuffle', 'conga', 'dancer', 'vortex', 'waterfall'];
 
 // Which dance each WebGL variant asks the card dancer for. Same renderer, same body.
 const DANCER_DANCES = { dancer: 'salsa', sultry: 'sultry' };
 
-// The list to rotate through on this device. A browser without WebGL cannot play the dancer,
-// and its fallback is the waterfall — so leaving it in the rotation would play the waterfall
-// twice in a row, which is the one thing the rotation exists to prevent. Dropping it keeps
-// every consecutive pair different, and the dance simply does not exist on that device.
+// The list to rotate through on this device. A browser without WebGL cannot play either
+// dance, and their fallback is the waterfall — so leaving them in the rotation would play
+// the waterfall twice in a row, which is the one thing the rotation exists to prevent.
+// Dropping them keeps every consecutive pair different, and the dances simply do not exist
+// on that device.
 export function availableCelebrations() {
-  return CELEBRATIONS.filter((variant) => variant !== 'dancer' || hasWebGL());
+  if (hasWebGL()) return [...CELEBRATIONS];
+  return CELEBRATIONS.filter((variant) => !DANCER_DANCES[variant]);
 }
 
 // The only entry point app.js uses. It picks the renderer for the variant it is handed, and
@@ -340,8 +338,7 @@ export function availableCelebrations() {
 // reach its win card whatever we got wrong in the decoration.
 export function startCelebration(canvas, options = {}) {
   stopCelebration();
-  const known = CELEBRATIONS.includes(options.variant) || PREVIEW_ONLY.includes(options.variant);
-  const variant = known ? options.variant : CELEBRATIONS[0];
+  const variant = CELEBRATIONS.includes(options.variant) ? options.variant : CELEBRATIONS[0];
   const dance = DANCER_DANCES[variant];
 
   let renderer = null;

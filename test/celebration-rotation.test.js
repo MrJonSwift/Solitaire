@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { resolveIndex, nextVariant } from '../js/celebration-rotation.js';
+import { CELEBRATIONS, availableCelebrations } from '../js/celebrate.js';
 
 test('a stored index that still names a celebration is kept', () => {
   assert.equal(resolveIndex(0, 3), 0);
@@ -45,4 +46,25 @@ test('a full cycle visits every celebration before repeating, and never twice in
   }
   assert.deepEqual(seen, [0, 1, 2]);
   assert.equal(index, 0, 'the cycle comes back to the start');
+});
+
+// The shipped rotation, not a made-up list. Two rules it must keep whatever is added: no
+// celebration ever plays twice in a row, and a device that cannot draw WebGL still gets a
+// list that never repeats a neighbour once the dances drop out.
+test('the shipped rotation never repeats a neighbour, with and without WebGL', () => {
+  // Node has no WebGL, so this is the degraded list a phone without it would get; it has
+  // to be exactly the full rotation minus the two dances.
+  const withoutGL = CELEBRATIONS.filter((v) => v !== 'dancer' && v !== 'sultry');
+  assert.deepEqual(availableCelebrations(), withoutGL);
+  for (const list of [CELEBRATIONS, withoutGL]) {
+    for (let i = 0; i < list.length; i++) {
+      assert.notEqual(list[i], list[(i + 1) % list.length], `${list[i]} sits next to itself`);
+    }
+  }
+  // The two card dances share one body, so they read as the same celebration.
+  assert.ok(Math.abs(CELEBRATIONS.indexOf('sultry') - CELEBRATIONS.indexOf('dancer')) > 1);
+});
+
+test('the newest celebration is met early', () => {
+  assert.equal(CELEBRATIONS[0], 'sultry');
 });
