@@ -42,9 +42,10 @@
     // celebration gets checked on hardware.
     //
     // Each tap after the first plays the next celebration in the rotation. Pin one with
-    // /preview.html?v=fan (also shuffle, conga, dancer, vortex, waterfall), and change the
-    // cadence with ?ms=120.
-    import { startCelebration, stopCelebration, CELEBRATIONS } from './js/celebrate.js';
+    // /preview.html?v=fan (also shuffle, conga, dancer, sultry, vortex, waterfall), and change
+    // the cadence with ?ms=120. 'sultry' is the slower card dance; it is not in the game's
+    // rotation yet, so it plays last here.
+    import { startCelebration, stopCelebration, CELEBRATIONS, PREVIEW_ONLY } from './js/celebrate.js';
     import { createDeck } from './js/game.js';
 
     const board = document.getElementById('board');
@@ -52,7 +53,8 @@
     const card = document.getElementById('preview-card');
     const hint = document.getElementById('preview-hint');
     const params = new URLSearchParams(location.search);
-    const pinned = CELEBRATIONS.indexOf(params.get('v'));
+    const VARIANTS = [...CELEBRATIONS, ...PREVIEW_ONLY];
+    const pinned = VARIANTS.indexOf(params.get('v'));
     const launchMs = Number(params.get('ms')) || undefined;
     const seed = Number(params.get('seed')) || 1;
     let slot = pinned >= 0 ? pinned : 0;
@@ -101,8 +103,8 @@
       const { cw, ch } = layout();
       placePiles();
       card.hidden = true;
-      const variant = CELEBRATIONS[slot];
-      if (pinned < 0) slot = (slot + 1) % CELEBRATIONS.length;
+      const variant = VARIANTS[slot];
+      if (pinned < 0) slot = (slot + 1) % VARIANTS.length;
       hint.textContent = `${variant} · tap during it to skip`;
       celebration = startCelebration(canvas, {
         variant,

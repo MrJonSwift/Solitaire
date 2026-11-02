@@ -1,9 +1,11 @@
-// The card dancer's renderer: one transparent WebGL layer over the board, one 4 s loop of
-// the rig from dancer-figure.js, then a fade so the win card can follow. Lifecycle only.
-// The dispatcher in celebrate.js decides whether this runs at all and owns the skip tap.
+// The card dancer's renderer: one transparent WebGL layer over the board, one loop of the
+// rig from dancer-figure.js, then a fade so the win card can follow. Lifecycle only.
+// The dispatcher in celebrate.js decides whether this runs at all, which dance plays, and
+// owns the skip tap. One body, more than one dance: the dance only changes the numbers.
 import * as THREE from '../vendor/three.module.js';
 import { createFigure } from './dancer-figure.js';
-import { sample, LOOP } from './dancer-motion.js';
+import * as salsa from './dancer-motion.js';
+import * as sultry from './dancer-motion-sultry.js';
 import { readStage, FADE_MS, SKIP_FADE_MS } from './celebration-stage.js';
 
 const FADE_SETTLE_MS = 40; // slack after the CSS transition; never wait on transitionend
@@ -14,6 +16,8 @@ const BASE_TARGET = new THREE.Vector3(0, 1.02, 0);
 // The spike solved this against the whole viewport. Here the same fraction is applied to
 // the safe rectangle, so a raised hand cannot land under the notch or home indicator.
 const FIT_FILL = 0.875;
+
+const DANCES = { salsa, sultry };
 
 let active = null;
 
@@ -68,7 +72,7 @@ function releaseDancer(resources) {
   }
 }
 
-export function startDancer() {
+export function startDancer(dance = 'salsa') {
   cancelDancer();
   const canvas = createLayer();
 
@@ -84,7 +88,7 @@ export function startDancer() {
   };
 
   try {
-    return buildDancer(canvas, resources);
+    return buildDancer(canvas, resources, DANCES[dance] || salsa);
   } catch (err) {
     releaseDancer(resources);
     canvas.remove();
@@ -92,7 +96,7 @@ export function startDancer() {
   }
 }
 
-function buildDancer(canvas, resources) {
+function buildDancer(canvas, resources, { sample, LOOP }) {
   const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
   resources.renderer = renderer;
   renderer.setClearColor(0x000000, 0); // transparent: the app's own felt shows through

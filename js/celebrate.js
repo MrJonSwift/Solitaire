@@ -312,6 +312,14 @@ function hasWebGL() {
 // remaining list still never repeats a neighbour.
 export const CELEBRATIONS = ['fan', 'shuffle', 'conga', 'dancer', 'vortex', 'waterfall'];
 
+// Celebrations that can be started by name but are not in the rotation yet, so a win never
+// meets them. The slower card dance lives here until it is judged on a phone next to the
+// original; the preview page offers both.
+export const PREVIEW_ONLY = ['sultry'];
+
+// Which dance each WebGL variant asks the card dancer for. Same renderer, same body.
+const DANCER_DANCES = { dancer: 'salsa', sultry: 'sultry' };
+
 // The list to rotate through on this device. A browser without WebGL cannot play the dancer,
 // and its fallback is the waterfall — so leaving it in the rotation would play the waterfall
 // twice in a row, which is the one thing the rotation exists to prevent. Dropping it keeps
@@ -332,12 +340,14 @@ export function availableCelebrations() {
 // reach its win card whatever we got wrong in the decoration.
 export function startCelebration(canvas, options = {}) {
   stopCelebration();
-  const variant = CELEBRATIONS.includes(options.variant) ? options.variant : CELEBRATIONS[0];
+  const known = CELEBRATIONS.includes(options.variant) || PREVIEW_ONLY.includes(options.variant);
+  const variant = known ? options.variant : CELEBRATIONS[0];
+  const dance = DANCER_DANCES[variant];
 
   let renderer = null;
-  if (variant === 'dancer' && hasWebGL()) {
+  if (dance && hasWebGL()) {
     try {
-      renderer = startDancer();
+      renderer = startDancer(dance);
     } catch (err) {
       console.warn('Card dancer failed to start; this is a bug, not a missing WebGL.', err);
       renderer = null;
@@ -346,7 +356,7 @@ export function startCelebration(canvas, options = {}) {
   if (!renderer) {
     renderer = startCanvasCelebration(canvas, {
       ...options,
-      variant: variant === 'dancer' ? 'waterfall' : variant,
+      variant: dance ? 'waterfall' : variant, // either dance falls back to the waterfall
     });
   }
 
